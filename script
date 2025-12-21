@@ -1,2 +1,38 @@
-yyhhyyybjuhyhyhhhhuhhghgyyyyhhvhffyyyyyygghht
-h
+import os
+import subprocess
+import json
+
+def run_slither_scan(contract_path):
+    print(f"--- Scanning Contract: {contract_path} ---")
+    
+    # Slither command to run and export results to JSON
+    output_file = "reports/audit_report.json"
+    command = f"slither {contract_path} --json {output_file}"
+    
+    try:
+        # Running the command
+        process = subprocess.run(command, shell=True, capture_output=True, text=True)
+        
+        if os.path.exists(output_file):
+            print(f"✅ Scan Complete! Report saved in {output_file}")
+            parse_results(output_file)
+        else:
+            print("❌ Scan failed or no vulnerabilities found.")
+            
+    except Exception as e:
+        print(f"Error occurred: {e}")
+
+def parse_results(json_file):
+    with open(json_file, 'r') as f:
+        data = json.load(f)
+        
+    vulnerabilities = data.get('results', {}).get('detectors', [])
+    print(f"\nFound {len(vulnerabilities)} potential issues:")
+    
+    for issue in vulnerabilities:
+        print(f"- [{issue['impact'].upper()}] {issue['check']}: {issue['description']}")
+
+if __name__ == "__main__":
+    # Example: scanning a sample contract in the contracts folder
+    contract_to_scan = "contracts/vulnerable_sample.sol"
+    run_slither_scan(contract_to_scan)
